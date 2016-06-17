@@ -6,19 +6,19 @@ import com.jakespringer.nonsequitur.engine.util.Wrapper
 import com.jakespringer.nonsequitur.engine.util.Wrapper
 
 class Notifier(notifiers: List[Notifier] = List()) extends Destructible {
-  protected var subscribers: List[() => Unit] = List()
+  protected[engine] var subscribers: List[() => Unit] = List()
   
   notifiers.foreach(x => x.subscribe(() => this.event()))
 
   def subscribe(listener: () => Unit): Destructible = {
     subscribers = subscribers :+ listener
-    var dc = new DestructibleContainer(listener)
+    var dc = new DestructibleContainer(listener, this)
     dc.addParent(this)
     dc
   }
   
   protected def event(): Unit = {
-    subscribers.foreach((f: (() => Unit)) => f.apply())
+    subscribers.foreach(_.apply())
   }
   
   def combine(first: Notifier, others: Notifier*): Notifier = {

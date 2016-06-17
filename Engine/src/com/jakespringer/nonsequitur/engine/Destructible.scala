@@ -10,11 +10,11 @@ class Destructible {
       ()
     } else {
       destroyed = true
-      children.foreach { _ destroy }
-      parents.foreach { _ removeChild this }
+      children.foreach(_.destroy())
+      parents.foreach(_.removeChild(this))
     }
   }
-  
+    
   def removeChild(child: Destructible): Unit = {
     children = children diff List(child)
     if (children isEmpty) destroy()
@@ -24,4 +24,6 @@ class Destructible {
     parent.children = parent.children :+ this
     parents = parents :+ parent
   }
+  
+  def isDestroyed(): Boolean = destroyed
 }
