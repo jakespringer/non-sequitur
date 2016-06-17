@@ -25,7 +25,6 @@
 
   <target name="clean" description="--&gt; clean the project">
     <delete includeemptydirs="true" quiet="true">
-      <fileset dir="${src.dir}" />
       <fileset dir="${build.dir}" />
       <fileset dir="${dist.dir}" />
     </delete>
