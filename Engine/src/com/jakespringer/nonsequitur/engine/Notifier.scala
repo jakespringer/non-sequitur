@@ -5,10 +5,10 @@ import com.jakespringer.nonsequitur.engine.util.Wrapper
 import com.jakespringer.nonsequitur.engine.util.Wrapper
 import com.jakespringer.nonsequitur.engine.util.Wrapper
 
-class Notifier(notifiers: List[Notifier] = List()) extends Destructible {
+class Notifier(notifiers: List[Notifier] = List(), weak: Boolean = false) extends Destructible {
   protected[engine] var subscribers: List[DestructibleContainer] = List()
 
-  notifiers.foreach(x => x.subscribe(() => this.event()))
+  notifiers.foreach(x => x.subscribe(() => this.event(), weak=weak))
 
   def subscribe(listener: () => Unit, weak: Boolean = false): Destructible = {
     val dc = new DestructibleContainer(listener, this)
@@ -26,7 +26,7 @@ class Notifier(notifiers: List[Notifier] = List()) extends Destructible {
   }
 
   def until(predicate: () => Boolean): Notifier = {
-    new Notifier(List(this)) {
+    new Notifier(List(this), weak=true) {
       override def event(): Unit = if (predicate()) {
         destroy();
       } else {
@@ -53,7 +53,7 @@ class Notifier(notifiers: List[Notifier] = List()) extends Destructible {
       if (predicate()) {
         notifier.event()
       }
-    }, true)
+    }, weak=true)
     notifier
   }
 
@@ -61,7 +61,7 @@ class Notifier(notifiers: List[Notifier] = List()) extends Destructible {
 
   def count(): Signal[Int] = {
     val wrapper = new Wrapper[Int](0)
-    new Signal[Int](List(this)) {
+    new Signal[Int](List(this), weak=true) {
       def get(): Int = {
         wrapper.value += 1
         wrapper.value
@@ -70,7 +70,7 @@ class Notifier(notifiers: List[Notifier] = List()) extends Destructible {
   }
 
   def distinct(): Notifier = {
-    new Notifier(List(this))
+    new Notifier(List(this), weak=true)
   }
 
   override def destroy() {

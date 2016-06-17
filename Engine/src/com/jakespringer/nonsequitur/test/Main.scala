@@ -10,7 +10,7 @@ object Main {
     val integral = Signal.integrate(s)
     val f = integral.filter(_ < 100.0)
     val b = s.untilNot(() => integral.get() < 100.0).send((x: Double) => println("b = " + x))
-    val k = integral.send((x: Double) => println("k = " + x))
+    val k = f.send((x: Double) => println("k = " + x))
     for (a <- 0 to 500) {
       s.set(a)
     }

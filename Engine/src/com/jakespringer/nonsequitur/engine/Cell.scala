@@ -16,10 +16,10 @@ class Cell[T] (
   }
   
   def setWhen(notifier: Notifier, setFunction: () => T): Destructible = {
-    notifier.subscribe(() => set(setFunction.apply()))
+    notifier.subscribe(() => set(setFunction.apply()), weak=false)
   }
   
   def editWhen(notifier: Notifier, editFunction: T => T): Destructible = {
-    notifier.subscribe(() => edit(editFunction))
+    notifier.subscribe(() => edit(editFunction), weak=false)
   }
 }

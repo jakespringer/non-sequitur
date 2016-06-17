@@ -3,13 +3,13 @@ package com.jakespringer.nonsequitur.engine
 import java.util.function.Supplier
 import com.jakespringer.nonsequitur.engine.util.Wrapper
 
-abstract class Signal[T](subscribers: List[Notifier] = List()) extends Notifier(subscribers) {  
+abstract class Signal[T](subscribers: List[Notifier] = List(), weak: Boolean = false) extends Notifier(subscribers, weak=weak) {  
   def get(): T
   
   def combine(first: Signal[T], others: Signal[T]*): Signal[T] = {
     val combined: Cell[T] = new Cell(get())
-    first.send((x: T) => combined.set(x), true)
-    others.foreach((s: Signal[T]) => s.send((x: T) => combined.set(x), true))
+    first.send((x: T) => combined.set(x), weak=true)
+    others.foreach((s: Signal[T]) => s.send((x: T) => combined.set(x), weak=true))
     combined
   }
   
@@ -23,17 +23,13 @@ abstract class Signal[T](subscribers: List[Notifier] = List()) extends Notifier(
   def filter(predicate: Function[T, Boolean]): Signal[T] = {
     val current = get()
     val signal = new Cell[T](if (predicate.apply(current)) current else /* TODO: FIGURE OUT WHAT GOES HERE -->*/current)
-    this.send((x: T) => {
-      if (predicate.apply(x)) {
-        signal.event()
-      }
-    }, true)
+    signal.setWhen(super.filter(() => predicate(get())), () => get())
     signal
   }
   
   override def until(predicate: () => Boolean): Signal[T] = {
     val thus = this
-    new Signal[T](List(this)) {
+    new Signal[T](List(this), weak=true) {
       override def event(): Unit = {
         if (predicate.apply()) {
           destroy()
@@ -52,7 +48,7 @@ abstract class Signal[T](subscribers: List[Notifier] = List()) extends Notifier(
     wrapper.value = trigger.subscribe(() => {
       signalUntil.destroy()
       wrapper.value.destroy()
-    }, true)
+    }, weak=true)
     signalUntil
   }
   
@@ -60,13 +56,13 @@ abstract class Signal[T](subscribers: List[Notifier] = List()) extends Notifier(
   
   override def distinct(): Signal[T] = {
     val thus = this
-    new Signal[T](List(this)) {
+    new Signal[T](List(this), weak=true) {
       def get(): T = thus.get()
     }
   }
   
   def send(consumer: T => _, weak: Boolean = false): Destructible = {
-    subscribe(() => consumer.apply(get()), weak)
+    subscribe(() => consumer.apply(get()), weak=weak)
   }
 }
 
