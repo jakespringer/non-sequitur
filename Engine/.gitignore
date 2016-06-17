@@ -1,7 +1,8 @@
 /bin/
 /target/
-/.classpath
+/ivy/
 /.cache-main
+/.classpath
 /.project
 *.jar
 *.class
