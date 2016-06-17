@@ -72,4 +72,9 @@ class Notifier(notifiers: List[Notifier] = List()) extends Destructible {
   def distinct(): Notifier = {
     new Notifier(List(this))
   }
+  
+  override def destroy() {
+    super.destroy()
+    subscribers = List()
+  }
 }
