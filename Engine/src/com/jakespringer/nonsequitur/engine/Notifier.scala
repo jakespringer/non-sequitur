@@ -6,59 +6,59 @@ import com.jakespringer.nonsequitur.engine.util.Wrapper
 import com.jakespringer.nonsequitur.engine.util.Wrapper
 
 class Notifier(notifiers: List[Notifier] = List()) extends Destructible {
-  protected[engine] var subscribers: List[() => Unit] = List()
-  
+  protected[engine] var subscribers: List[DestructibleContainer] = List()
+
   notifiers.foreach(x => x.subscribe(() => this.event()))
 
-  def subscribe(listener: () => Unit): Destructible = {
-    subscribers = subscribers :+ listener
-    var dc = new DestructibleContainer(listener, this)
-    dc.addParent(this)
+  def subscribe(listener: () => Unit, weak: Boolean = false): Destructible = {
+    val dc = new DestructibleContainer(listener, this)
+    subscribers = subscribers :+ dc
+    if (weak) dc.addWeakParent(this) else dc.addParent(this)
     dc
   }
-  
+
   protected def event(): Unit = {
-    subscribers.foreach(_.apply())
+    subscribers.foreach(_.runnable())
   }
-  
+
   def combine(first: Notifier, others: Notifier*): Notifier = {
     new Notifier(others.toList :+ first)
   }
-  
+
   def until(predicate: () => Boolean): Notifier = {
     new Notifier(List(this)) {
-      override def event(): Unit = if (predicate.apply()) {
-          destroy();
-        } else {
-          super.event()
-        }
+      override def event(): Unit = if (predicate()) {
+        destroy();
+      } else {
+        super.event()
+      }
     }
   }
-  
+
   def until(trigger: Notifier): Notifier = {
-    var wrapper = new Wrapper[Destructible]()
+    val wrapper = new Wrapper[Destructible]()
     val signalUntil = distinct()
     wrapper.value = trigger.subscribe(() => {
       signalUntil.destroy()
       wrapper.value.destroy()
-    })
+    }, true)
     signalUntil
   }
-  
+
   def untilNot(antiPredicate: () => Boolean): Notifier = until(() => !antiPredicate.apply())
-  
+
   def filter(predicate: () => Boolean): Notifier = {
     val notifier = new Notifier()
     this.subscribe(() => {
-      if (predicate.apply()) {
+      if (predicate()) {
         notifier.event()
       }
-    })
+    }, true)
     notifier
   }
-  
+
   def filterNot(antiPredicate: () => Boolean): Notifier = filter(() => !antiPredicate.apply())
-  
+
   def count(): Signal[Int] = {
     val wrapper = new Wrapper[Int](0)
     new Signal[Int](List(this)) {
@@ -68,11 +68,11 @@ class Notifier(notifiers: List[Notifier] = List()) extends Destructible {
       }
     }
   }
-  
+
   def distinct(): Notifier = {
     new Notifier(List(this))
   }
-  
+
   override def destroy() {
     super.destroy()
     subscribers = List()
