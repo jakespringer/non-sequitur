@@ -23,3 +23,7 @@ class Cell[T] (
     notifier.subscribe(() => edit(editFunction), weak=false)
   }
 }
+
+// blah.foreach(() => println("hi"))
+// return ;
+// blah is out of scope

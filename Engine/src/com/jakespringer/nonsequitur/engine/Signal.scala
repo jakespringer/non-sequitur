@@ -61,7 +61,7 @@ abstract class Signal[T](subscribers: List[Notifier] = List(), weak: Boolean = f
     }
   }
   
-  def send(consumer: T => _, weak: Boolean = false): Destructible = {
+  def send(consumer: T => Any, weak: Boolean = false): Destructible = {
     subscribe(() => consumer.apply(get()), weak=weak)
   }
 }

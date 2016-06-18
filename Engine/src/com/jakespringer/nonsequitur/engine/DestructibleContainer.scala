@@ -5,6 +5,6 @@ class DestructibleContainer (
   val notifier: Notifier
 ) extends Destructible {
   override def destroy() {
-    notifier.subscribers = notifier.subscribers diff List(runnable)
+    notifier.subscribers = notifier.subscribers diff List(this)
   }
 }
