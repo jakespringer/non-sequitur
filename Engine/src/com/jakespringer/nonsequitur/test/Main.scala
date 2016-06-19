@@ -9,10 +9,10 @@ import com.jakespringer.nonsequitur.engine.Destructible
 object Main {
   var current = 0
   
-  def createWeak(c: Signal[Double]): Unit = {
+  def createWeak(c: Signal[Double]): Destructible = {
     val v = current
     current += 1
-    new WeakReference(c.send((x: Double) => print(v + " "), weak=true));
+    c.foreach((x: Double) => print(v + " "), weak=true);
   }
   
   def createObject(): WeakReference[Object] = {
@@ -24,14 +24,13 @@ object Main {
     sig.subscribe(() => println())
     var list = List(createObject())
     while (true) {
+      val s = createWeak(sig)
       sig.set(Math.random())
-      createWeak(sig)
       list = list :+ createObject()
       println()
       list.foreach { x => print(x.get match { case Some(e) => "s " case None => "n "}) }
       println()
       Thread.sleep(300)
-      System.gc()
     }
   }
 }

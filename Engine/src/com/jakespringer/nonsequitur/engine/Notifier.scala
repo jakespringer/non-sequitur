@@ -1,24 +1,30 @@
 package com.jakespringer.nonsequitur.engine
 
-import com.jakespringer.nonsequitur.engine.util.Wrapper
-import com.jakespringer.nonsequitur.engine.util.Wrapper
-import com.jakespringer.nonsequitur.engine.util.Wrapper
+import scala.ref.WeakReference
+
 import com.jakespringer.nonsequitur.engine.util.Wrapper
 
 class Notifier(notifiers: List[Notifier] = List(), weak: Boolean = false) extends Destructible {
-  protected[engine] var subscribers: List[DestructibleContainer] = List()
+  protected[engine] var subscribers: List[WeakReference[DestructibleContainer]] = List()
 
   notifiers.foreach(x => x.subscribe(() => this.event(), weak=weak))
 
   def subscribe(listener: () => Unit, weak: Boolean = false): Destructible = {
     val dc = new DestructibleContainer(listener, this)
-    subscribers = subscribers :+ dc
+    subscribers = subscribers :+ new WeakReference(dc)
     if (weak) dc.addWeakParent(this) else dc.addParent(this)
     dc
   }
 
   protected def event(): Unit = {
-    subscribers.foreach(_.runnable())
+    var deletionList = List[WeakReference[DestructibleContainer]]()
+    subscribers.foreach((x: WeakReference[DestructibleContainer]) => {
+      x.get match {
+        case Some(e) => e.runnable()
+        case None => deletionList = deletionList :+ x
+      }
+    })
+    subscribers = subscribers diff deletionList
   }
 
   def combine(first: Notifier, others: Notifier*): Notifier = {

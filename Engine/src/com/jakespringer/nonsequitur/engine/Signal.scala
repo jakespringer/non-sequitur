@@ -8,8 +8,8 @@ abstract class Signal[T](subscribers: List[Notifier] = List(), weak: Boolean = f
   
   def combine(first: Signal[T], others: Signal[T]*): Signal[T] = {
     val combined: Cell[T] = new Cell(get())
-    first.send((x: T) => combined.set(x), weak=true)
-    others.foreach((s: Signal[T]) => s.send((x: T) => combined.set(x), weak=true))
+    first.foreach((x: T) => combined.set(x), weak=true)
+    others.foreach((s: Signal[T]) => s.foreach((x: T) => combined.set(x), weak=true))
     combined
   }
   
@@ -61,7 +61,7 @@ abstract class Signal[T](subscribers: List[Notifier] = List(), weak: Boolean = f
     }
   }
   
-  def send(consumer: T => Any, weak: Boolean = false): Destructible = {
+  def foreach(consumer: T => Any, weak: Boolean = false): Destructible = {
     subscribe(() => consumer.apply(get()), weak=weak)
   }
 }
