@@ -9,7 +9,7 @@ class Notifier(notifiers: List[Notifier] = List()) extends Destructible {
 
   notifiers.foreach(x => x.subscribe(() => this.event()))
 
-  def subscribe(listener: () => Unit): Destructible = {
+  def subscribe(listener: Function0[Unit]): Destructible = {
     val dc = new DestructibleContainer(listener, this)
     subscribers = subscribers :+ dc
     dc.addParent(this)
@@ -24,7 +24,7 @@ class Notifier(notifiers: List[Notifier] = List()) extends Destructible {
     new Notifier(others.toList :+ first)
   }
 
-  def until(predicate: () => Boolean): Notifier = {
+  def until(predicate: Function0[Boolean]): Notifier = {
     new Notifier(List(this)) {
       override def event(): Unit = if (predicate()) {
         destroy();
@@ -44,9 +44,9 @@ class Notifier(notifiers: List[Notifier] = List()) extends Destructible {
     signalUntil
   }
 
-  def untilNot(antiPredicate: () => Boolean): Notifier = until(() => !antiPredicate.apply())
+  def untilNot(antiPredicate: Function0[Boolean]): Notifier = until(() => !antiPredicate.apply())
 
-  def filter(predicate: () => Boolean): Notifier = {
+  def filter(predicate: Function0[Boolean]): Notifier = {
     val notifier = new Notifier()
     this.subscribe(() => {
       if (predicate()) {
@@ -56,7 +56,7 @@ class Notifier(notifiers: List[Notifier] = List()) extends Destructible {
     notifier
   }
 
-  def filterNot(antiPredicate: () => Boolean): Notifier = filter(() => !antiPredicate.apply())
+  def filterNot(antiPredicate: Function0[Boolean]): Notifier = filter(() => !antiPredicate.apply())
 
   def count(): Signal[Int] = {
     val wrapper = new Wrapper[Int](0)
@@ -78,8 +78,9 @@ class Notifier(notifiers: List[Notifier] = List()) extends Destructible {
     notifier
   }
   
-  def setStrong(str: Boolean): Unit = {
+  def setStrong(str: Boolean): Notifier = {
     this.str = str
+    this
   }
 
   override def destroy() {

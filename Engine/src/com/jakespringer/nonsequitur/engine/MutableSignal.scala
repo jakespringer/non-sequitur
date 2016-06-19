@@ -1,10 +1,10 @@
 package com.jakespringer.nonsequitur.engine
 
-class Cell[T] (
+class MutableSignal[T] (
   private var value: T
 ) extends Signal[T] {
-  @Override
-  def get(): T = value
+
+  override def get(): T = value
   
   def set(newValue: T): Unit = {
     value = newValue
@@ -15,15 +15,11 @@ class Cell[T] (
     set(editFunction.apply(value))
   }
   
-  def setWhen(notifier: Notifier, setFunction: () => T): Destructible = {
+  def setWhen(notifier: Notifier, setFunction: Function0[T]): Destructible = {
     notifier.subscribe(() => set(setFunction.apply()))
   }
   
-  def editWhen(notifier: Notifier, editFunction: T => T): Destructible = {
+  def editWhen(notifier: Notifier, editFunction: Function[T, T]): Destructible = {
     notifier.subscribe(() => edit(editFunction))
   }
 }
-
-// blah.foreach(() => println("hi"))
-// return ;
-// blah is out of scope

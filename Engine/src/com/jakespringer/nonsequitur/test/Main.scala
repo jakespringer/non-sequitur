@@ -1,6 +1,6 @@
 package com.jakespringer.nonsequitur.test
 
-import com.jakespringer.nonsequitur.engine.Cell
+import com.jakespringer.nonsequitur.engine.MutableSignal
 import com.jakespringer.nonsequitur.engine.Signal
 import scala.ref.WeakReference
 import java.util.ArrayList
@@ -20,7 +20,7 @@ object Main {
   }
   
   def main(args: Array[String]): Unit = {
-    val sig = new Cell[Double](0.0)
+    val sig = new MutableSignal[Double](0.0)
     sig.subscribe(() => println())
     var list = List(createObject())
     while (true) {

@@ -7,7 +7,7 @@ abstract class Signal[T](subscribers: List[Notifier] = List()) extends Notifier(
   def get(): T
   
   def combine(first: Signal[T], others: Signal[T]*): Signal[T] = {
-    val combined: Cell[T] = new Cell(get())
+    val combined: MutableSignal[T] = new MutableSignal(get())
     first.foreach((x: T) => combined.set(x), weak=true)
     others.foreach((s: Signal[T]) => s.foreach((x: T) => combined.set(x), weak=true))
     combined
@@ -15,19 +15,19 @@ abstract class Signal[T](subscribers: List[Notifier] = List()) extends Notifier(
   
   def map[R](f: Function[T, R]): Signal[R] = {
     val thus = this
-    val cell = new Cell[R](f.apply(this.get()))
+    val cell = new MutableSignal[R](f.apply(this.get()))
     cell.setWhen(this, () => f.apply(thus.get()))
     cell
   }
   
   def filter(predicate: Function[T, Boolean]): Signal[T] = {
     val current = get()
-    val signal = new Cell[T](if (predicate(current)) current else /* TODO: FIGURE OUT WHAT GOES HERE -->*/ current)
+    val signal = new MutableSignal[T](if (predicate(current)) current else /* TODO: FIGURE OUT WHAT GOES HERE -->*/ current)
     signal.setWhen(super.filter(() => predicate(get())), () => get())
     signal
   }
   
-  override def until(predicate: () => Boolean): Signal[T] = {
+  override def until(predicate: Function0[Boolean]): Signal[T] = {
     val thus = this
     new Signal[T](List(this)) {
       override def event(): Unit = {
@@ -52,13 +52,24 @@ abstract class Signal[T](subscribers: List[Notifier] = List()) extends Notifier(
     signalUntil
   }
   
-  override def untilNot(antiPredicate: () => Boolean) = until(() => !antiPredicate.apply())
+  override def untilNot(antiPredicate: Function0[Boolean]) = until(() => !antiPredicate.apply())
   
   override def distinct(): Signal[T] = {
     val thus = this
     new Signal[T](List(this)) {
       def get(): T = thus.get()
     }
+  }
+  
+  override def strong(): Signal[T] = {
+    val notifier = distinct()
+    notifier.setStrong(true)
+    notifier
+  }
+  
+  override def setStrong(str: Boolean): Signal[T] = {
+    this.str = str
+    this
   }
   
   def foreach(consumer: T => Any, weak: Boolean = false): Destructible = {
