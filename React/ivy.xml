@@ -1,0 +1,15 @@
+<ivy-module version="2.4" xmlns:extra="http://ant.apache.org/ivy/extra">
+  <info organisation="com.jakespringer" module="nonsequitur" />
+  <dependencies>
+    <dependency org="org.lwjgl" name="lwjgl" rev="${lwjgl.version}"
+      conf="default" />
+    <dependency org="org.lwjgl" name="lwjgl-platform" rev="${lwjgl.version}">
+      <artifact name="lwjgl-platform" type="jar"
+        extra:classifier="natives-linux" />
+      <artifact name="lwjgl-platform" type="jar"
+        extra:classifier="natives-osx" />
+      <artifact name="lwjgl-platform" type="jar"
+        extra:classifier="natives-windows" />
+    </dependency>
+  </dependencies>
+</ivy-module>
