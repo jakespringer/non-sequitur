@@ -3,7 +3,7 @@ package com.jakespringer.nonsequitur.engine
 import java.util.function.Supplier
 import com.jakespringer.nonsequitur.engine.util.Wrapper
 
-abstract class Signal[T](subscribers: List[Notifier] = List(), weak: Boolean = false) extends Notifier(subscribers, weak=weak) {  
+abstract class Signal[T](subscribers: List[Notifier] = List()) extends Notifier(subscribers) {  
   def get(): T
   
   def combine(first: Signal[T], others: Signal[T]*): Signal[T] = {
@@ -22,14 +22,14 @@ abstract class Signal[T](subscribers: List[Notifier] = List(), weak: Boolean = f
   
   def filter(predicate: Function[T, Boolean]): Signal[T] = {
     val current = get()
-    val signal = new Cell[T](if (predicate.apply(current)) current else /* TODO: FIGURE OUT WHAT GOES HERE -->*/current)
+    val signal = new Cell[T](if (predicate(current)) current else /* TODO: FIGURE OUT WHAT GOES HERE -->*/ current)
     signal.setWhen(super.filter(() => predicate(get())), () => get())
     signal
   }
   
   override def until(predicate: () => Boolean): Signal[T] = {
     val thus = this
-    new Signal[T](List(this), weak=true) {
+    new Signal[T](List(this)) {
       override def event(): Unit = {
         if (predicate.apply()) {
           destroy()
@@ -48,7 +48,7 @@ abstract class Signal[T](subscribers: List[Notifier] = List(), weak: Boolean = f
     wrapper.value = trigger.subscribe(() => {
       signalUntil.destroy()
       wrapper.value.destroy()
-    }, weak=true)
+    })
     signalUntil
   }
   
@@ -56,13 +56,13 @@ abstract class Signal[T](subscribers: List[Notifier] = List(), weak: Boolean = f
   
   override def distinct(): Signal[T] = {
     val thus = this
-    new Signal[T](List(this), weak=true) {
+    new Signal[T](List(this)) {
       def get(): T = thus.get()
     }
   }
   
   def foreach(consumer: T => Any, weak: Boolean = false): Destructible = {
-    subscribe(() => consumer.apply(get()), weak=weak)
+    subscribe(() => consumer.apply(get()))
   }
 }
 

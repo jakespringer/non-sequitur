@@ -4,27 +4,20 @@ import scala.ref.WeakReference
 
 import com.jakespringer.nonsequitur.engine.util.Wrapper
 
-class Notifier(notifiers: List[Notifier] = List(), weak: Boolean = false) extends Destructible {
-  protected[engine] var subscribers: List[WeakReference[DestructibleContainer]] = List()
+class Notifier(notifiers: List[Notifier] = List()) extends Destructible {
+  protected[engine] var subscribers: List[DestructibleContainer] = List()
 
-  notifiers.foreach(x => x.subscribe(() => this.event(), weak=weak))
+  notifiers.foreach(x => x.subscribe(() => this.event()))
 
-  def subscribe(listener: () => Unit, weak: Boolean = false): Destructible = {
+  def subscribe(listener: () => Unit): Destructible = {
     val dc = new DestructibleContainer(listener, this)
-    subscribers = subscribers :+ new WeakReference(dc)
-    if (weak) dc.addWeakParent(this) else dc.addParent(this)
+    subscribers = subscribers :+ dc
+    dc.addParent(this)
     dc
   }
 
   protected def event(): Unit = {
-    var deletionList = List[WeakReference[DestructibleContainer]]()
-    subscribers.foreach((x: WeakReference[DestructibleContainer]) => {
-      x.get match {
-        case Some(e) => e.runnable()
-        case None => deletionList = deletionList :+ x
-      }
-    })
-    subscribers = subscribers diff deletionList
+    subscribers.foreach(_.runnable())
   }
 
   def combine(first: Notifier, others: Notifier*): Notifier = {
@@ -32,7 +25,7 @@ class Notifier(notifiers: List[Notifier] = List(), weak: Boolean = false) extend
   }
 
   def until(predicate: () => Boolean): Notifier = {
-    new Notifier(List(this), weak=true) {
+    new Notifier(List(this)) {
       override def event(): Unit = if (predicate()) {
         destroy();
       } else {
@@ -47,7 +40,7 @@ class Notifier(notifiers: List[Notifier] = List(), weak: Boolean = false) extend
     wrapper.value = trigger.subscribe(() => {
       signalUntil.destroy()
       wrapper.value.destroy()
-    }, true)
+    })
     signalUntil
   }
 
@@ -59,7 +52,7 @@ class Notifier(notifiers: List[Notifier] = List(), weak: Boolean = false) extend
       if (predicate()) {
         notifier.event()
       }
-    }, weak=true)
+    })
     notifier
   }
 
@@ -67,7 +60,7 @@ class Notifier(notifiers: List[Notifier] = List(), weak: Boolean = false) extend
 
   def count(): Signal[Int] = {
     val wrapper = new Wrapper[Int](0)
-    new Signal[Int](List(this), weak=true) {
+    new Signal[Int](List(this)) {
       def get(): Int = {
         wrapper.value += 1
         wrapper.value
@@ -76,7 +69,17 @@ class Notifier(notifiers: List[Notifier] = List(), weak: Boolean = false) extend
   }
 
   def distinct(): Notifier = {
-    new Notifier(List(this), weak=true)
+    new Notifier(List(this))
+  }
+  
+  def strong(): Notifier = {
+    val notifier = distinct()
+    notifier.setStrong(true)
+    notifier
+  }
+  
+  def setStrong(str: Boolean): Unit = {
+    this.str = str
   }
 
   override def destroy() {
