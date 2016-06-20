@@ -3,5 +3,7 @@
 /.classpath
 /.cache-main
 /.project
+/.settings/
+/lib/
 *.jar
 *.class

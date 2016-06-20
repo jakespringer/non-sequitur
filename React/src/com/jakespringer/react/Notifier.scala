@@ -1,11 +1,11 @@
-package com.jakespringer.nonsequitur.engine
+package com.jakespringer.react
 
 import scala.ref.WeakReference
 
-import com.jakespringer.nonsequitur.engine.util.Wrapper
+import com.jakespringer.react.util.Wrapper
 
 class Notifier(notifiers: List[Notifier] = List()) extends Destructible {
-  protected[engine] var subscribers: List[DestructibleContainer] = List()
+  protected[react] var subscribers: List[DestructibleContainer] = List()
 
   notifiers.foreach(x => x.subscribe(() => this.event()))
 

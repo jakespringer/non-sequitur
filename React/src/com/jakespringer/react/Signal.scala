@@ -1,15 +1,15 @@
-package com.jakespringer.nonsequitur.engine
+package com.jakespringer.react
 
 import java.util.function.Supplier
-import com.jakespringer.nonsequitur.engine.util.Wrapper
+import com.jakespringer.react.util.Wrapper
 
 abstract class Signal[T](subscribers: List[Notifier] = List()) extends Notifier(subscribers) {  
   def get(): T
   
   def combine(first: Signal[T], others: Signal[T]*): Signal[T] = {
     val combined: MutableSignal[T] = new MutableSignal(get())
-    first.foreach((x: T) => combined.set(x), weak=true)
-    others.foreach((s: Signal[T]) => s.foreach((x: T) => combined.set(x), weak=true))
+    first.foreach((x: T) => combined.set(x))
+    others.foreach((s: Signal[T]) => s.foreach((x: T) => combined.set(x)))
     combined
   }
   
@@ -72,7 +72,7 @@ abstract class Signal[T](subscribers: List[Notifier] = List()) extends Notifier(
     this
   }
   
-  def foreach(consumer: T => Any, weak: Boolean = false): Destructible = {
+  def foreach(consumer: T => Any): Destructible = {
     subscribe(() => consumer.apply(get()))
   }
 }
@@ -86,7 +86,7 @@ object Signal {
     })
   }
   
-  def derivate(v: Signal[Double], du: Signal[Double] = new Signal[Double] { def get(): Double = 1.0 }): Signal[Double] = {
+  def derivativeOf(v: Signal[Double], du: Signal[Double] = new Signal[Double] { def get(): Double = 1.0 }): Signal[Double] = {
     val storage = new Wrapper[Double](v.get())
     v.map((x: Double) => {
       val temp = storage.value

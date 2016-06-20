@@ -1,4 +1,4 @@
-package com.jakespringer.nonsequitur.engine
+package com.jakespringer.react
 
 class DestructibleContainer (
   val runnable: () => Unit,

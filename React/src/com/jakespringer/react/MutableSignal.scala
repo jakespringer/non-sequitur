@@ -1,4 +1,4 @@
-package com.jakespringer.nonsequitur.engine
+package com.jakespringer.react
 
 class MutableSignal[T] (
   private var value: T
@@ -21,5 +21,10 @@ class MutableSignal[T] (
   
   def editWhen(notifier: Notifier, editFunction: Function[T, T]): Destructible = {
     notifier.subscribe(() => edit(editFunction))
+  }
+  
+  override def setStrong(str: Boolean): MutableSignal[T] = {
+    super.setStrong(str)
+    this
   }
 }
